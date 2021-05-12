@@ -5,38 +5,35 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalMaterialApi
-@ExperimentalCoroutinesApi
 @Composable
 fun ListPreference(
     title: String,
     summary: String,
-    key: String,
+    value: String?,
+    onValueChanged: (String) -> Unit = {},
     singleLineTitle: Boolean,
     icon: ImageVector,
     entries: Map<String, String>,
-    defaultValue: String = "",
     enabled: Boolean = true,
 ) {
-    val preferences = LocalPreferences.current
-    val selected by preferences.getString(key = key, defaultValue).asFlow().collectAsState(initial = defaultValue)
     val showDialog = remember { mutableStateOf(false) }
     val closeDialog = { showDialog.value = false }
 
     Preference(
         title = title,
-        summary = entries[selected] ?: summary,
+        summary = entries[value] ?: summary,
         singleLineTitle = singleLineTitle,
         icon = icon,
         enabled = enabled,
@@ -44,39 +41,37 @@ fun ListPreference(
     )
 
     if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = { closeDialog() },
-            title = { Text(text = title) },
-            text = {
-                Column {
-                    entries.forEach { current ->
-                        val isSelected = selected == current.key
-                        val onSelected = {
-                            preferences.sharedPreferences.edit().putString(key, current.key).apply()
-                            closeDialog()
-                        }
-                        Row(Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = isSelected,
-                                onClick = { if (!isSelected) onSelected() }
-                            )
-                            .padding(16.dp)
-                        ) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = { if (!isSelected) onSelected() }
-                            )
-                            Text(
-                                text = current.value,
-                                style = MaterialTheme.typography.body1.merge(),
-                                modifier = Modifier.padding(start = 16.dp)
-                            )
-                        }
+        PreferenceDialog(
+            onDismissRequest = closeDialog,
+            title = title,
+        ) {
+            Column {
+                entries.forEach { current ->
+                    val isSelected = value == current.key
+                    val onSelected = {
+                        onValueChanged(current.key)
+                        closeDialog()
+                    }
+                    Row(Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = isSelected,
+                            onClick = { if (!isSelected) onSelected() }
+                        )
+                        .padding(16.dp)
+                    ) {
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = { if (!isSelected) onSelected() }
+                        )
+                        Text(
+                            text = current.value,
+                            style = MaterialTheme.typography.body1.merge(),
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
                     }
                 }
-            },
-            confirmButton = { }
-        )
+            }
+        }
     }
 }

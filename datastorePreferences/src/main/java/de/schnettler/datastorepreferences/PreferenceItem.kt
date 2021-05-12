@@ -1,8 +1,10 @@
 package de.schnettler.datastorepreferences
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.datastore.preferences.preferencesKey
-import androidx.datastore.preferences.preferencesSetKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 
 interface BasePreferenceItem
 
@@ -19,6 +21,18 @@ interface ListPreferenceItem : PreferenceItem<String> {
     val entries: Map<String, String>
 }
 
+data class StringPreferenceItem(
+    override val title: String,
+    override val summary: String,
+    override val key: String,
+    override val singleLineTitle: Boolean,
+    override val icon: ImageVector,
+    override val enabled: Boolean = true,
+    val defaultValue: String = "",
+) : PreferenceItem<String> {
+    val prefKey = stringPreferencesKey(key)
+}
+
 data class SwitchPreferenceItem(
     override val title: String,
     override val summary: String,
@@ -28,7 +42,7 @@ data class SwitchPreferenceItem(
     override val enabled: Boolean = true,
     val defaultValue: Boolean = false,
 ): PreferenceItem<Boolean> {
-    val prefKey = preferencesKey<Boolean>(key)
+    val prefKey = booleanPreferencesKey(key)
 }
 
 data class SingleListPreferenceItem(
@@ -41,7 +55,7 @@ data class SingleListPreferenceItem(
     override val entries: Map<String, String>,
     val defaultValue: String = "",
 ) : ListPreferenceItem {
-    val prefKey = preferencesKey<String>(key)
+    val prefKey = stringPreferencesKey(key)
 }
 
 data class MultiListPreferenceItem(
@@ -54,7 +68,7 @@ data class MultiListPreferenceItem(
     override val entries: Map<String, String>,
     val defaultValue: Set<String> = emptySet()
 ) : ListPreferenceItem {
-    val prefKey = preferencesSetKey<String>(key)
+    val prefKey = stringSetPreferencesKey(key)
 }
 
 data class SeekbarPreferenceItem(
@@ -69,7 +83,7 @@ data class SeekbarPreferenceItem(
     val steps: Int = 0,
     val valueRepresentation: (Float) -> String
 ) : PreferenceItem<Float> {
-    val prefKey = preferencesKey<Float>(key)
+    val prefKey = floatPreferencesKey(key)
 }
 
 data class PreferenceGroup(

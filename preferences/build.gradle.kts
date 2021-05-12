@@ -20,8 +20,9 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.0.0-alpha12"
+        kotlinCompilerExtensionVersion = "1.0.0-beta06"
     }
+    buildToolsVersion = "30.0.3"
     kotlinOptions {
         freeCompilerArgs += listOf(
             "-Xopt-in=kotlin.RequiresOptIn",
@@ -35,6 +36,4 @@ dependencies {
     // Compose
     api(AndroidX.compose.material)
 
-    // Preferences
-    api("com.github.tfcporciuncula:flow-preferences:_")
 }

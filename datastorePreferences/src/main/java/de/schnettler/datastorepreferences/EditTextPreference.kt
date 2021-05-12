@@ -5,18 +5,17 @@ import androidx.compose.runtime.Composable
 
 @ExperimentalMaterialApi
 @Composable
-fun MultiSelectListPreference(
-    item: MultiListPreferenceItem,
-    values: Set<String>,
-    onValuesChanged: (Set<String>) -> Unit
+fun EditTextPreference(
+    item: StringPreferenceItem,
+    value: String?,
+    onValueChange: (String) -> Unit
 ) {
-    de.schnettler.composepreferences.MultiSelectListPreference(
+    de.schnettler.composepreferences.EditTextPreference(
         title = item.title,
         summary = item.summary,
-        values = values,
+        value = value,
+        onValueChanged = onValueChange,
         singleLineTitle = item.singleLineTitle,
         icon = item.icon,
-        entries = item.entries,
-        onValuesChanged = onValuesChanged
     )
 }

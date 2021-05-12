@@ -1,46 +1,39 @@
 package de.schnettler.composepreferences
 
-import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.Checkbox
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalMaterialApi
-@ExperimentalCoroutinesApi
 @Composable
 fun MultiSelectListPreference(
     title: String,
     summary: String,
-    key: String,
+    values: Set<String>,
+    onValuesChanged: (Set<String>) -> Unit = {},
     singleLineTitle: Boolean,
     icon: ImageVector,
     entries: Map<String, String>,
-    defaultValue: Set<String> = emptySet(),
     enabled: Boolean = true,
 ) {
-    val preferences = LocalPreferences.current
-    val selected by preferences.getStringSet(key = key, defaultValue).asFlow()
-        .collectAsState(initial = defaultValue)
     val showDialog = remember { mutableStateOf(false) }
     val closeDialog = { showDialog.value = false }
-    val descripion = entries.filter { selected.contains(it.key) }.map { it.value }
+    val description = entries.filter { values.contains(it.key) }.map { it.value }
         .joinToString(separator = ", ", limit = 3)
 
     Preference(
         title = title,
-        summary = if (descripion.isNotBlank()) descripion else summary,
+        summary = if (description.isNotBlank()) description else summary,
         singleLineTitle = singleLineTitle,
         icon = icon,
         enabled = enabled,
@@ -48,48 +41,47 @@ fun MultiSelectListPreference(
     )
 
     if (showDialog.value) {
-        AlertDialog(
+        var selectedValues by remember(values) { mutableStateOf(values) }
+        PreferenceDialog(
             onDismissRequest = { closeDialog() },
-            title = { Text(text = title) },
-            text = {
-                Column {
-                    entries.forEach { current ->
-                        val isSelected = selected.contains(current.key)
-                        val onSelectionChanged = {
-                            val result = when (!isSelected) {
-                                true -> selected + current.key
-                                false -> selected - current.key
-                            }
-                            preferences.sharedPreferences.edit().putStringSet(key, result).apply()
+            title = title,
+            onConfirm = {
+                onValuesChanged(selectedValues)
+                closeDialog()
+            },
+        ) {
+            Column {
+                entries.forEach { current ->
+                    val isSelected = selectedValues.contains(current.key)
+                    val onSelectionChanged = {
+                        selectedValues = when (!isSelected) {
+                            true -> selectedValues + current.key
+                            false -> selectedValues - current.key
                         }
-                        Row(Modifier
+                    }
+                    Row(
+                        Modifier
                             .fillMaxWidth()
                             .selectable(
                                 selected = isSelected,
-                                onClick = { onSelectionChanged() }
+                                onClick = onSelectionChanged
                             )
                             .padding(16.dp)
-                        ) {
-                            Checkbox(checked = isSelected, onCheckedChange = {
+                    ) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = {
                                 onSelectionChanged()
-                            })
-                            Text(
-                                text = current.value,
-                                style = MaterialTheme.typography.body1.merge(),
-                                modifier = Modifier.padding(start = 16.dp)
-                            )
-                        }
+                            }
+                        )
+                        Text(
+                            text = current.value,
+                            style = MaterialTheme.typography.body1.merge(),
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { closeDialog() },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.secondary),
-                ) {
-                    Text(text = "Select")
-                }
             }
-        )
+        }
     }
 }
